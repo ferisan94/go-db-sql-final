@@ -86,6 +86,9 @@ func TestSetAddress(t *testing.T) {
 	err = store.SetAddress(id, newAddress)
 	require.NoError(t, err)
 
+	updatedParcel, err := store.Get(id)
+	require.NoError(t, err)
+
 	// Проверка, что адрес обновился
 	parcel.Number = id
 	parcel.Address = newAddress
