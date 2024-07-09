@@ -52,10 +52,8 @@ func TestAddGetDelete(t *testing.T) {
 	require.NoError(t, err)
 
 	// Проверка, что значения всех полей в полученной посылке соответствуют тестовой посылке
-	require.Equal(t, parcel.Client, storedParcel.Client)
-	require.Equal(t, parcel.Status, storedParcel.Status)
-	require.Equal(t, parcel.Address, storedParcel.Address)
-	require.Equal(t, parcel.CreatedAt, storedParcel.CreatedAt)
+	parcel.Number = id
+	require.Equal(t, parcel, storedParcel)
 
 	// Удаление добавленной посылки из БД
 	err = store.Delete(id)
@@ -89,9 +87,9 @@ func TestSetAddress(t *testing.T) {
 	require.NoError(t, err)
 
 	// Проверка, что адрес обновился
-	updatedParcel, err := store.Get(id)
-	require.NoError(t, err)
-	require.Equal(t, newAddress, updatedParcel.Address)
+	parcel.Number = id
+	parcel.Address = newAddress
+	require.Equal(t, parcel, updatedParcel)
 
 	// Удаление добавленной посылки из БД
 	err = store.Delete(id)
@@ -120,7 +118,8 @@ func TestSetStatus(t *testing.T) {
 	// check
 	updatedParcel, err := store.Get(parcel.Number)
 	require.NoError(t, err)
-	require.Equal(t, ParcelStatusSent, updatedParcel.Status)
+	parcel.Status = ParcelStatusSent
+	require.Equal(t, parcel, updatedParcel)
 }
 
 // TestGetByClient проверяет получение посылок по идентификатору клиента
@@ -157,25 +156,16 @@ func TestGetByClient(t *testing.T) {
 	// Проверка, что количество полученных посылок совпадает с количеством добавленных
 	require.Len(t, storedParcels, len(parcels))
 
-	// Проверка, что все добавленные посылки присутствуют в полученном списке и их значения соответствуют
-	for _, storedParcel := range storedParcels {
-		found := false
-		for _, p := range parcels {
-			if storedParcel.Number == p.Number {
-				found = true
-				require.Equal(t, p.Client, storedParcel.Client)
-				require.Equal(t, p.Status, storedParcel.Status)
-				require.Equal(t, p.Address, storedParcel.Address)
-				require.Equal(t, p.CreatedAt, storedParcel.CreatedAt)
-				break
-			}
-		}
-		require.True(t, found, "Не удалось найти посылку с идентификатором %d", storedParcel.Number)
+	parcelsMap := make(map[int]Parcel)
+	for _, p := range parcels {
+		parcelsMap[p.Number] = p
 	}
 
-	// Удаление всех добавленных посылок из БД
-	for _, p := range parcels {
-		err = store.Delete(p.Number)
-		require.NoError(t, err)
+	// Проверка, что все добавленные посылки присутствуют в полученном списке и их значения соответствуют
+	for _, storedParcel := range storedParcels {
+		expectedParcel, found := parcelsMap[storedParcel.Number]
+		require.True(t, found, "Не удалось найти посылку с идентификатором %d", storedParcel.Number)
+		require.Equal(t, expectedParcel, storedParcel)
+
 	}
 }

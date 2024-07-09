@@ -43,7 +43,7 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 	var parcels []Parcel
 	rows, err := s.db.Query("SELECT * FROM parcel WHERE client = ?", client)
 	if err != nil {
-		return parcels, err
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -51,7 +51,7 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 		var p Parcel
 		err := rows.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
 		if err != nil {
-			return parcels, err
+			return nil, err
 		}
 		parcels = append(parcels, p)
 	}
@@ -65,21 +65,18 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 		return errors.New("невозможно изменить статус на указанный")
 	}
 
-	// Проверяем текущий статус посылки
-	currentParcel, err := s.Get(number)
+	stmt := `UPDATE parcel SET status = ? WHERE number = ? AND status = ?`
+	result, err := s.db.Exec(stmt, status, number, ParcelStatusRegistered)
 	if err != nil {
 		return err
 	}
 
-	switch currentParcel.Status {
-	case ParcelStatusRegistered:
-		// Можно менять статус
-		stmt := `UPDATE parcel SET status = ? WHERE number = ?`
-		_, err := s.db.Exec(stmt, status, number)
-		if err != nil {
-			return err
-		}
-	default:
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
 		return errors.New("невозможно изменить статус")
 	}
 
@@ -87,40 +84,38 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 }
 
 func (s ParcelStore) SetAddress(number int, address string) error {
-	// Проверяем, можно ли изменить адрес
-	currentParcel, err := s.Get(number)
+	stmt := `UPDATE parcel SET address = ? WHERE number = ? AND status = ?`
+	result, err := s.db.Exec(stmt, address, number, ParcelStatusRegistered)
 	if err != nil {
 		return err
 	}
 
-	if currentParcel.Status != ParcelStatusRegistered {
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
 		return errors.New("невозможно изменить адрес для данной посылки")
-	}
-
-	stmt := `UPDATE parcel SET address = ? WHERE number = ?`
-	_, err = s.db.Exec(stmt, address, number)
-	if err != nil {
-		return err
 	}
 
 	return nil
 }
 
 func (s ParcelStore) Delete(number int) error {
-	// Проверяем, можно ли удалить посылку
-	currentParcel, err := s.Get(number)
+	stmt := `DELETE FROM parcel WHERE number = ? AND status = ?`
+	result, err := s.db.Exec(stmt, number, ParcelStatusRegistered)
 	if err != nil {
 		return err
 	}
 
-	if currentParcel.Status != ParcelStatusRegistered {
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
 		return errors.New("невозможно удалить посылку с данным статусом")
-	}
-
-	stmt := `DELETE FROM parcel WHERE number = ?`
-	_, err = s.db.Exec(stmt, number)
-	if err != nil {
-		return err
 	}
 
 	return nil
