@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 )
 
 type ParcelStore struct {
@@ -55,68 +54,30 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 		}
 		parcels = append(parcels, p)
 	}
+	// Проверка на наличие ошибок при итерации
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	return parcels, nil
 }
 
 func (s ParcelStore) SetStatus(number int, status string) error {
-	// Проверяем, можно ли изменить статус
-	if status != ParcelStatusSent && status != ParcelStatusDelivered {
-		return errors.New("невозможно изменить статус на указанный")
-	}
-
-	stmt := `UPDATE parcel SET status = ? WHERE number = ? AND status = ?`
-	result, err := s.db.Exec(stmt, status, number, ParcelStatusRegistered)
-	if err != nil {
-		return err
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
-		return errors.New("невозможно изменить статус")
-	}
-
-	return nil
+	_, err := s.db.Exec("UPDATE parcel SET status = :status WHERE number = :number",
+		sql.Named("status", status),
+		sql.Named("number", number))
+	return err
 }
 
 func (s ParcelStore) SetAddress(number int, address string) error {
-	stmt := `UPDATE parcel SET address = ? WHERE number = ? AND status = ?`
-	result, err := s.db.Exec(stmt, address, number, ParcelStatusRegistered)
-	if err != nil {
-		return err
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
-		return errors.New("невозможно изменить адрес для данной посылки")
-	}
-
-	return nil
+	_, err := s.db.Exec("UPDATE parcel SET address = :address WHERE number = :number",
+		sql.Named("address", address),
+		sql.Named("number", number))
+	return err
 }
 
 func (s ParcelStore) Delete(number int) error {
-	stmt := `DELETE FROM parcel WHERE number = ? AND status = ?`
-	result, err := s.db.Exec(stmt, number, ParcelStatusRegistered)
-	if err != nil {
-		return err
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
-		return errors.New("невозможно удалить посылку с данным статусом")
-	}
-
-	return nil
+	_, err := s.db.Exec("DELETE FROM parcel WHERE number = :number",
+		sql.Named("number", number))
+	return err
 }

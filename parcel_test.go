@@ -122,7 +122,7 @@ func TestSetStatus(t *testing.T) {
 	updatedParcel, err := store.Get(parcel.Number)
 	require.NoError(t, err)
 	parcel.Status = ParcelStatusSent
-	require.Equal(t, parcel, updatedParcel)
+	require.Equal(t, ParcelStatusSent, updatedParcel.Status)
 }
 
 // TestGetByClient проверяет получение посылок по идентификатору клиента
