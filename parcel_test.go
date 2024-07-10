@@ -56,7 +56,7 @@ func TestAddGetDelete(t *testing.T) {
 	require.Equal(t, parcel, storedParcel)
 
 	// Удаление добавленной посылки из БД
-	err = store.Delete(id)
+	err = store.Delete(id, storedParcel.Status)
 	require.NoError(t, err)
 
 	// Попытка получить удалённую посылку из БД
@@ -83,7 +83,7 @@ func TestSetAddress(t *testing.T) {
 
 	// Обновление адреса у добавленной посылки
 	newAddress := "new test address"
-	err = store.SetAddress(id, newAddress)
+	err = store.SetAddress(id, newAddress, parcel.Status)
 	require.NoError(t, err)
 
 	updatedParcel, err := store.Get(id)
@@ -95,7 +95,7 @@ func TestSetAddress(t *testing.T) {
 	require.Equal(t, parcel, updatedParcel)
 
 	// Удаление добавленной посылки из БД
-	err = store.Delete(id)
+	err = store.Delete(id, updatedParcel.Status)
 	require.NoError(t, err)
 }
 

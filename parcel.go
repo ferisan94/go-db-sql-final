@@ -69,15 +69,17 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 	return err
 }
 
-func (s ParcelStore) SetAddress(number int, address string) error {
-	_, err := s.db.Exec("UPDATE parcel SET address = :address WHERE number = :number",
+func (s ParcelStore) SetAddress(number int, address string, status string) error {
+	_, err := s.db.Exec("UPDATE parcel SET address = :address WHERE number = :number AND status = :status",
 		sql.Named("address", address),
-		sql.Named("number", number))
+		sql.Named("number", number),
+		sql.Named("status", status))
 	return err
 }
 
-func (s ParcelStore) Delete(number int) error {
-	_, err := s.db.Exec("DELETE FROM parcel WHERE number = :number",
-		sql.Named("number", number))
+func (s ParcelStore) Delete(number int, status string) error {
+	_, err := s.db.Exec("DELETE FROM parcel WHERE number = :number AND status = :status",
+		sql.Named("number", number),
+		sql.Named("status", status))
 	return err
 }
