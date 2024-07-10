@@ -90,19 +90,11 @@ func (s ParcelService) NextStatus(number int) error {
 }
 
 func (s ParcelService) ChangeAddress(number int, address string) error {
-	parcel, err := s.store.Get(number)
-	if err != nil {
-		return err
-	}
-	return s.store.SetAddress(number, address, parcel.Status)
+	return s.store.SetAddress(number, address)
 }
 
 func (s ParcelService) Delete(number int) error {
-	parcel, err := s.store.Get(number)
-	if err != nil {
-		return err
-	}
-	return s.store.Delete(number, parcel.Status)
+	return s.store.Delete(number)
 }
 
 func main() {
